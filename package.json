@@ -1,8 +1,8 @@
 {
-  "name": "queue-caller",
-  "productName": "queue-caller",
+  "name": "queue-register",
+  "productName": "queue-register",
   "version": "1.0.0",
-  "description": "Queue caller application",
+  "description": "Queue register application",
   "main": "src/index.js",
   "scripts": {
     "start": "electron-forge start",
@@ -32,7 +32,7 @@
         "packageManager": "yarn"
       },
       "electronWinstallerConfig": {
-        "name": "queue_caller"
+        "name": "queue_register"
       },
       "electronInstallerDebian": {},
       "electronInstallerRedhat": {},
@@ -42,7 +42,7 @@
       },
       "windowsStoreConfig": {
         "packageName": "",
-        "name": "queuecaller"
+        "name": "queueregister"
       }
     }
   },

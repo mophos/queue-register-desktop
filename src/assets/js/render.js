@@ -5,47 +5,11 @@ $(document).ready(async function () {
   var servicePoints = await getServicePoints();
   setServicePoints();
 
-  var QUEUE_ID;
-  var QUEUE_NUMBER;
-  var ROOM_ID;
-  var ROOM_NUMBER;
-  var ROOMS = [];
-  var QUEUES = [];
-  var QUEUES_HISTORY = [];
-  var QUEUES_TRANSFER = [];
   var IS_OFFLINE = false;
 
   async function getServicePoints() {
     var _servicePoints = sessionStorage.getItem('servicePoints');
     return JSON.parse(_servicePoints);
-  }
-
-  async function getWorking() {
-    var _apiUrl = localStorage.getItem('apiUrl');
-    var token = sessionStorage.getItem('token');
-
-    var selected = $('#slServicePoints').val();
-
-    const _url = `${_apiUrl}/queue/working/${selected}`;
-    return axios.get(_url, { headers: { "Authorization": `Bearer ${token}` } });
-  }
-
-  async function getTransfer() {
-    var _apiUrl = localStorage.getItem('apiUrl');
-    var token = sessionStorage.getItem('token');
-
-    var selected = $('#slServicePoints').val();
-
-    try {
-      const _url = `${_apiUrl}/queue/pending/${selected}`;
-      var rs = await axios.get(_url, { headers: { "Authorization": `Bearer ${token}` } });
-      if (rs.data.statusCode === 200) {
-        QUEUES_TRANSFER = rs.data.results;
-        renderListTransfer(rs.data.results);
-      }
-    } catch (error) {
-      console.log(error);
-    }
   }
 
   async function cancelQueue(queueId) {
@@ -74,128 +38,21 @@ $(document).ready(async function () {
     }
   }
 
-  async function getRooms() {
-    var _apiUrl = localStorage.getItem('apiUrl');
-    var token = sessionStorage.getItem('token');
-
-    var selected = $('#slServicePoints').val();
-
-    const _url = `${_apiUrl}/service-rooms/${selected}`;
-    return axios.get(_url, { headers: { "Authorization": `Bearer ${token}` } });
-  }
-
-  async function callQueue(queueNumber, roomId, roomNumber, queueId, isCompleted = 'Y') {
-    var servicePointId = $('#slServicePoints').val();
-
-    var _apiUrl = localStorage.getItem('apiUrl');
-    var token = sessionStorage.getItem('token');
-
-    const _url = `${_apiUrl}/queue/caller/${queueId}`;
-
-    var body = {
-      servicePointId: servicePointId,
-      queueNumber: queueNumber,
-      roomNumber: roomNumber,
-      roomId: roomId,
-      isCompleted: isCompleted
-    }
-
-    return axios.post(_url, body, { headers: { "Authorization": `Bearer ${token}` } });
-  }
-
-  async function doTransfer(queueNumber, queueId, servicePointId, transferServicePointId) {
-    if (servicePointId === transferServicePointId) {
-      Swal.fire({
-        type: 'error',
-        title: 'Oops...',
-        text: `ไม่สามารถสร้างคิวในจุดบริการเดียวกันได้`
-      });
-    } else {
-      try {
-
-        var _apiUrl = localStorage.getItem('apiUrl');
-        var token = sessionStorage.getItem('token');
-
-        var body = {
-          queueId: queueId,
-          servicePointId: transferServicePointId
-        };
-
-        const _url = `${_apiUrl}/queue/pending`;
-
-        var rs = await axios.post(_url, body, { headers: { "Authorization": `Bearer ${token}` } });
-
-        if (rs.data.statusCode === 200) {
-          var queueNumber = rs.data.queueNumber;
-          Swal.fire({
-            type: 'success',
-            title: 'เสร็จเรียบร้อย...',
-            text: `คิวใหม่ของคุณคือ ${queueNumber}`
-          }).then(() => {
-            $('#modalServicePoints').modal('hide');
-            getTransfer();
-          });
-
-          QUEUE_ID = null;
-          QUEUE_NUMBER = null;
-
-          getQueue();
-          getHistory();
-        } else {
-          Swal.fire({
-            type: 'error',
-            title: 'Oops...',
-            text: `เกิดข้อผิดพลาด`
-          });
-        }
-      } catch (error) {
-        console.log(error);
-        Swal.fire({
-          type: 'error',
-          title: 'Oops...',
-          text: `เกิดข้อผิดพลาด`
-        });
-      }
-    }
-  }
-
-  async function getHistory() {
-    var _apiUrl = localStorage.getItem('apiUrl');
-    var token = sessionStorage.getItem('token');
-
-    var selected = $('#slServicePoints').val();
-
-    const _url = `${_apiUrl}/queue/working/history/${selected}`;
-    var rs = await axios.get(_url, { headers: { "Authorization": `Bearer ${token}` } });
-    if (rs.data) {
-      if (rs.data.results) {
-        QUEUES_HISTORY = [];
-        QUEUES_HISTORY = rs.data.results;
-        renderListHistory(rs.data.results);
-      }
-    }
-  }
-
   async function getQueue() {
     try {
       var _apiUrl = localStorage.getItem('apiUrl');
       var token = sessionStorage.getItem('token');
 
-      var selected = $('#slServicePoints').val();
+      // var selected = $('#slServicePoints').val();
 
-      const _url = `${_apiUrl}/queue/waiting/${selected}`;
+      const _url = `${_apiUrl}/queue/all-queue/active`;
       const rs = await axios.get(_url, { headers: { "Authorization": `Bearer ${token}` } });
 
       if (rs.data) {
-        // clear all queue
-        QUEUES = [];
-        // set new queues
-        QUEUES = rs.data.results;
-
         var data = rs.data;
         if (data.statusCode === 200) {
           console.log(data.results);
-          renderListWaiting(data.results);
+          renderQueue(data.results);
         }
       } else {
         alert(rs.message);
@@ -204,6 +61,124 @@ $(document).ready(async function () {
       alert(error.message);
       console.error(error);
     }
+  }
+
+  async function getPriorities() {
+    try {
+      var _apiUrl = localStorage.getItem('apiUrl');
+      var token = sessionStorage.getItem('token');
+      const _url = `${_apiUrl}/priorities`;
+      const rs = await axios.get(_url, { headers: { "Authorization": `Bearer ${token}` } });
+
+      if (rs.data) {
+        var data = rs.data;
+        if (data.statusCode === 200) {
+          console.log(data.results);
+          renderPriorities(data.results);
+        }
+      } else {
+        alert(rs.message);
+      }
+    } catch (error) {
+      alert(error.message);
+      console.error(error);
+    }
+  }
+
+  async function printQueue(queueId) {
+    var printerId = localStorage.getItem('printerId');
+
+    if (printerId) {
+      try {
+        var topic = `/printer/${printerId}`;
+        var _apiUrl = localStorage.getItem('apiUrl');
+        var token = sessionStorage.getItem('token');
+
+        const _url = `${_apiUrl}/print/queue/prepare/print`;
+        const rs = await axios.post(_url, {
+          queueId: queueId,
+          topic: topic
+        }, { headers: { "Authorization": `Bearer ${token}` } });
+
+        if (rs.data) {
+          var data = rs.data;
+          if (data.statusCode === 200) {
+            Swal.fire({
+              type: 'success',
+              text: 'พิมพ์บัตรคิวเรียบร้อย',
+              timer: 2000
+            });
+          }
+        } else {
+          alert(rs.message);
+        }
+      } catch (error) {
+        console.log(error);
+        this.alertService.error('ไม่สามารถพิมพ์บัตรคิวได้');
+      }
+    } else {
+      Swal.fire({
+        type: 'error',
+        title: 'Oops...',
+        text: 'ไม่พบเครื่องพิมพ์',
+      });
+    }
+  }
+
+  async function registerQueue(hn, servicePointId, priorityId) {
+
+    if (IS_OFFLINE) {
+      Swal.fire({
+        type: 'error',
+        title: 'Oops...',
+        text: 'ไม่สามารถเชื่อมต่อกับ Notify Server ได้',
+      });
+    } else {
+      try {
+        var _apiUrl = localStorage.getItem('apiUrl');
+        var token = sessionStorage.getItem('token');
+
+        const _url = `${_apiUrl}/queue/prepare/register`;
+        const body = {
+          hn: hn,
+          servicePointId: servicePointId,
+          priorityId: priorityId
+        };
+
+        const rs = await axios.post(_url, body, { headers: { "Authorization": `Bearer ${token}` } });
+
+        if (rs.data) {
+          var data = rs.data;
+          if (data.statusCode === 200) {
+            var queueId = data.queueId;
+            if (queueId) {
+              $('#txtHN').val('');
+              $('#txtHN').focus();
+              printQueue(queueId);
+            } else {
+              Swal.fire({
+                type: 'error',
+                title: 'Oops...',
+                text: 'ไม่พบคิว',
+              });  
+            }
+          }
+        } else {
+          Swal.fire({
+            type: 'error',
+            title: 'Oops...',
+            text: rs.data.message,
+          });        }
+      } catch (error) {
+        console.log(error);
+        Swal.fire({
+          type: 'error',
+          title: 'Oops...',
+          text: 'เกิดข้อผิดพลาด',
+        });
+      }
+    }
+
   }
 
   function setServicePoints() {
@@ -219,9 +194,9 @@ $(document).ready(async function () {
     });
   }
 
-  function renderListWaiting(data) {
-    var listWaiting = $('#listWaiting');
-    listWaiting.empty();
+  function renderQueue(data) {
+    var listQueue = $('#listQueue');
+    listQueue.empty();
 
     $.each(data, (k, v) => {
       var html = `
@@ -234,124 +209,39 @@ $(document).ready(async function () {
             <div>
               <p class="mb-1 font-weight-bold">HN : ${v.hn}</p>
               <p class="mb-1">${v.priority_name}</p>
+              <p class="mb-1">${v.room_name ? v.room_name : ''}</p>
             </div>
             <div class="btn-group">
-              <button class="btn btn-success" data-action="callQueue" data-number="${v.queue_number}" data-queue-id="${v.queue_id}">เรียกคิว</button>
-              <button class="btn btn-danger" data-name="btnCancelQueue" data-number="${v.queue_number}" data-queue-id="${v.queue_id}">ยกเลิก</button>
+              <button class="btn btn-success" data-name="btnPrintQueue" data-number="${v.queue_number}" data-queue-id="${v.queue_id}">พิมพ์</button>
+              <button class="btn btn-danger" data-roomid="${v.room_id}" data-roomname="${v.room_name}" data-name="btnCancelQueue" data-number="${v.queue_number}" data-queue-id="${v.queue_id}">ยกเลิก</button>
             </div>
           </div>
         </li>
       `;
 
-      listWaiting.append(html);
+      listQueue.append(html);
     });
   }
 
-  function renderListTransfer(data) {
-    var listTransfer = $('#listTransfer');
-    listTransfer.empty();
+  function renderPriorities(data) {
+    var slPriorities = $('#slPriorities');
+    slPriorities.empty();
 
     $.each(data, (k, v) => {
       var html = `
-      <li class="list-group-item list-group-item-action flex-column align-items-start">
-          <div class="d-flex w-100 justify-content-between">
-            <h5 class="text-danger font-weight-bold">${v.queue_number}</h5>
-            <h5 class="mb-1">${v.title}${v.first_name} ${v.last_name}</h5>
-          </div>
-          <div class="d-flex w-100 justify-content-between">
-            <div>
-              <p class="mb-1 font-weight-bold">HN : ${v.hn}</p>
-              <p class="mb-1">ประเภท: ${v.priority_name}</p>
-            </div>
-            <div class="btn-group">
-              <button class="btn btn-success" data-action="callQueue" data-number="${v.queue_number}" data-queue-id="${v.queue_id}">เรียกคิว</button>
-            </div>
-          </div>
-        </li>
+        <option value="${v.priority_id}">${v.priority_name}</option>
       `;
 
-      listTransfer.append(html);
+      slPriorities.append(html);
     });
   }
 
-  function renderListHistory(data) {
-    var listHistory = $('#listHistory');
-    listHistory.empty();
-
-    $.each(data, (k, v) => {
-      var html = `
-      <li class="list-group-item list-group-item-action flex-column align-items-start">
-          <div class="d-flex w-100 justify-content-between">
-            <h5 class="text-danger font-weight-bold">${v.queue_number}</h5>
-            <h5 class="mb-1">${v.title}${v.first_name} ${v.last_name}</h5>
-          </div>
-          <div class="d-flex w-100 justify-content-between">
-            <div>
-              <p class="mb-1 font-weight-bold">HN : ${v.hn}</p>
-              <p class="mb-1">ประเภท: ${v.priority_name}</p>
-            </div>
-            <div class="btn-group">
-              <button class="btn btn-success" data-action="reCallQueue" data-number="${v.queue_number}" data-queue-id="${v.queue_id}">เรียกซ้ำ</button>
-              <button data-name="btnTransfer" data-queue-id="${v.queue_id}" data-number="${v.queue_number}" class="btn btn-danger">ส่งต่อ</button>
-            </div>
-          </div>
-        </li>
-      `;
-
-      listHistory.append(html);
-    });
-  }
-
-  function setActiveList(queueId, isHistory) {
-    var listCurrent = $('#listCurrent');
-    listCurrent.empty();
-
-    var queue;
-
-    if (isHistory === 'Y') {
-      var idx = _.findIndex(QUEUES_HISTORY, { queue_id: +queueId });
-      if (idx > -1) {
-        queue = QUEUES_HISTORY[idx];
-      }
-    } else {
-      var idx = _.findIndex(QUEUES, { queue_id: +queueId });
-      queue = QUEUES[idx];
-    }
-
-    console.log(queue);
-
-    if (queue) {
-
-      var html = `
-      <li class="list-group-item list-group-item-action flex-column align-items-start active">
-          <div class="d-flex w-100 justify-content-between">
-            <h5 style="color: white;" class="font-weight-bold">${queue.queue_number}</h5>
-            <h5 class="mb-1">${queue.title}${queue.first_name} ${queue.last_name}</h5>
-          </div>
-          <div class="d-flex w-100 justify-content-between">
-            <div>
-              <p class="mb-1 font-weight-bold">HN : ${queue.hn}</p>
-              <p class="mb-1">ประเภท: ${queue.priority_name}</p>
-            </div>
-            <div class="btn-group">
-              <button class="btn btn-success" data-action="reCallQueue" data-number="${queue.queue_number}" data-queue-id="${queue.queue_id}">เรียกซ้ำ</button>
-            </div>
-          </div>
-        </li>
-      `;
-
-      listCurrent.append(html);
-    }
-
-  }
-
-  function connectWebSocket(servicePointId) {
+  function connectWebSocket() {
 
     const GLOBAL_TOPIC = sessionStorage.getItem('QUEUE_CENTER_TOPIC');
     const NOTIFY_URL = `ws://${sessionStorage.getItem('NOTIFY_SERVER')}:${+sessionStorage.getItem('NOTIFY_PORT')}`;
     const NOTIFY_USER = sessionStorage.getItem('NOTIFY_USER');
     const NOTIFY_PASSWORD = sessionStorage.getItem('NOTIFY_PASSWORD');
-    const SERVICEPOINT_TOPIC = sessionStorage.getItem('SERVICE_POINT_TOPIC');
 
     try {
       CLIENT.end(true);
@@ -364,8 +254,7 @@ $(document).ready(async function () {
       password: NOTIFY_PASSWORD
     });
 
-    const TOPIC = `${SERVICEPOINT_TOPIC}/${servicePointId}`;
-    const VISIT_TOPIC = `${GLOBAL_TOPIC}/${servicePointId}`;
+    const TOPIC = `${GLOBAL_TOPIC}`;
 
     CLIENT.on('connect', () => {
       console.log('Connected!');
@@ -379,15 +268,6 @@ $(document).ready(async function () {
           console.log(error);
         }
       });
-
-      CLIENT.subscribe(VISIT_TOPIC, (error) => {
-        console.log('Subscribe : ' + VISIT_TOPIC);
-        if (error) {
-          IS_OFFLINE = true;
-          document.title = 'SUBSCRIBE ERROR!';
-          console.log(error);
-        }
-      });
     });
 
     CLIENT.on('close', () => {
@@ -397,11 +277,9 @@ $(document).ready(async function () {
     });
 
     CLIENT.on('message', (_topic, payload) => {
-      if (_topic === VISIT_TOPIC || _topic === TOPIC) {
+      if (_topic === TOPIC) {
         console.log('Message receive: ' + payload.toString())
         getQueue();
-        getHistory();
-        getTransfer();
       }
     });
 
@@ -425,36 +303,42 @@ $(document).ready(async function () {
     }));
   });
 
-
-  function setRooms(rooms) {
-    $('#slRooms').empty();
-
-    $.each(rooms, (k, v) => {
-      $('#slRooms').append($("<option/>", {
-        value: v.room_id,
-        text: v.room_name
-      }));
-    });
-  }
-
   document.title = sessionStorage.getItem('FULLNAME');
 
-  $('body').on('click', 'button[data-name="btnTransfer"]', async function (e) {
-    e.preventDefault();
+  connectWebSocket();
+  getPriorities();
+  getQueue();
 
-    if (IS_OFFLINE) {
+  $('#txtHN').on('keyup', function (e) {
+    if (e.keyCode === 13) {
+      var hn = $(this).val().trim();
+      var servicePointId = $('#slServicePoints').val();
+      var priorityId = $('#slPriorities').val();
+
+      if (hn && servicePointId && priorityId) {
+        registerQueue(hn, servicePointId, priorityId);
+      } else {
+        Swal.fire({
+          type: 'error',
+          title: 'Oops...',
+          text: 'กรุณาระบุข้อมูลให้ครบ',
+        });
+      }
+    }
+  });
+
+  $('#btnRegister').on('click', function (e) {
+    var hn = $('#txtHN').val().trim();
+    var servicePointId = $('#slServicePoints').val();
+    var priorityId = $('#slPriorities').val();
+
+    if (hn && servicePointId && priorityId) {
+      registerQueue(hn, servicePointId, priorityId);
+    } else {
       Swal.fire({
         type: 'error',
         title: 'Oops...',
-        text: 'ไม่สามารถเชื่อมต่อ Notify Server ได้',
-      });
-    } else {
-      QUEUE_NUMBER = $(this).data('number');
-      QUEUE_ID = $(this).data('queue-id');
-
-      $('#modalServicePoints').modal({
-        keyboard: false,
-        backdrop: 'static'
+        text: 'กรุณาระบุข้อมูลให้ครบ',
       });
     }
   });
@@ -469,128 +353,50 @@ $(document).ready(async function () {
         text: 'ไม่สามารถเชื่อมต่อ Notify Server ได้',
       });
     } else {
+      var roomId = $(this).data('roomid');
       var queueNumber = $(this).data('number');
+      var queueId = $(this).data('queue-id');
+      if (roomId) {
+        Swal.fire({
+          type: 'error',
+          title: 'Oops...',
+          text: 'คนไข้เรียกเข้าห้องตรวจแล้วไม่สามารถลบได้',
+        });
+      } else {
+        if (queueId) {
+          cancelQueue(queueId);
+        }
+      }
+    }
+  });
+
+  $('body').on('click', 'button[data-name="btnPrintQueue"]', async function (e) {
+    e.preventDefault();
+
+    if (IS_OFFLINE) {
+      Swal.fire({
+        type: 'error',
+        title: 'Oops...',
+        text: 'ไม่สามารถเชื่อมต่อ Notify Server ได้',
+      });
+    } else {
       var queueId = $(this).data('queue-id');
       if (queueId) {
-        cancelQueue(queueId);
+        printQueue(queueId);
+      } else {
+        Swal.fire({
+          type: 'error',
+          title: 'Oops...',
+          text: 'ไม่พบคิว',
+        });
       }
     }
   });
 
-  $('#btnDoTransfer').on('click', function (e) {
-    var transferServicePointId = $('#slTransferServicePoints').val();
-    var servicePointId = $('#slServicePoints').val();
-
-    if (transferServicePointId && servicePointId && QUEUE_NUMBER && QUEUE_ID) {
-      doTransfer(QUEUE_NUMBER, QUEUE_ID, servicePointId, transferServicePointId);
-    } else {
-      Swal.fire({
-        type: 'error',
-        title: 'Oops...',
-        text: 'กรุณาระบุจุดบริการ',
-      });
-    }
-  });
-
-  $(document).on('change', '#slServicePoints', async function (e) {
+  $('#btnRefresh').on('click', function (e) {
     e.preventDefault();
-    var servicePointId = $('#slServicePoints').val();
-    if (servicePointId) {
-      try {
-        $('#listCurrent').empty();
-        getQueue();
-        getHistory();
-        getTransfer();
-        connectWebSocket(servicePointId);
 
-        var rs = await getRooms();
-
-        ROOMS = rs.data.results;
-
-        if (rs.data) {
-          var rooms = rs.data.results;
-          setRooms(rooms);
-        }
-      } catch (error) {
-        console.log(error);
-        Swal.fire({
-          type: 'error',
-          title: 'Oops...',
-          text: 'เกิดข้อผิดพลาดบางประการ',
-        });
-      }
-    }
-  });
-
-  // call queue
-  $('body').on('click', 'button[data-action="callQueue"]', async function () {
-    if (IS_OFFLINE) {
-      Swal.fire({
-        type: 'error',
-        title: 'Oops...',
-        text: 'ไม่สามารถเชื่อมต่อ Notify Server ได้',
-      });
-    } else {
-      var queueNumber = $(this).data('number');
-      var queueId = $(this).data('queue-id');
-      var roomId = $('#slRooms').val();
-
-      if (roomId) {
-        var idx = _.findIndex(ROOMS, { room_id: +roomId });
-
-        var roomNumber;
-
-        if (idx > -1) {
-          roomNumber = ROOMS[idx].room_number;
-        }
-
-        await callQueue(queueNumber, +roomId, roomNumber, +queueId);
-        setActiveList(queueId, 'N');
-
-      } else {
-        Swal.fire({
-          type: 'error',
-          title: 'Oops...',
-          text: 'กรุณาระบุห้องตรวจ',
-        });
-      }
-    }
-
-  });
-
-  $('body').on('click', 'button[data-action="reCallQueue"]', async function () {
-    if (IS_OFFLINE) {
-      Swal.fire({
-        type: 'error',
-        title: 'Oops...',
-        text: 'ไม่สามารถเชื่อมต่อ Notify Server ได้',
-      });
-    } else {
-      var queueNumber = $(this).data('number');
-      var queueId = $(this).data('queue-id');
-      var roomId = $('#slRooms').val();
-
-      if (roomId) {
-        var idx = _.findIndex(ROOMS, { room_id: +roomId });
-
-        var roomNumber;
-
-        if (idx > -1) {
-          roomNumber = ROOMS[idx].room_number;
-        }
-
-        await callQueue(queueNumber, +roomId, roomNumber, +queueId);
-        setActiveList(queueId, 'Y');
-
-      } else {
-        Swal.fire({
-          type: 'error',
-          title: 'Oops...',
-          text: 'กรุณาระบุห้องตรวจ',
-        });
-      }
-    }
-
+    getQueue();
   });
 
 });

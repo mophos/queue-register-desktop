@@ -85,6 +85,7 @@ $(document).ready(() => {
   $('#btnSaveSetting').on('click', (e) => {
     e.preventDefault();
     localStorage.setItem('apiUrl', $('#txtSettingUrl').val());
+    localStorage.setItem('printerId', $('#txtPrinterId').val());
     $('#modalSetting').modal('hide');
   });
 
