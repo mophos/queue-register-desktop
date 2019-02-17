@@ -51,10 +51,11 @@ var doLogin = async function (username, password) {
           }
 
         } else {
-          alert('เกิดข้อผิดพลาดx')
+          alert('เกิดข้อผิดพลาด')
         }
       } else {
         alert('กรุณาตั้งค่าการเชื่อมต่อ');
+        Swal.close();
       }
     } catch (error) {
       Swal.close();
