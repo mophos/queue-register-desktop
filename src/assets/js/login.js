@@ -76,7 +76,9 @@ $(document).ready(() => {
   $('#btnSetting').on('click', (e) => {
     e.preventDefault();
     var apiUrl = localStorage.getItem('apiUrl');
+    var printerId = localStorage.getItem('printerId');
     $('#txtSettingUrl').val(apiUrl);
+    $('#txtPrinterId').val(printerId);
     $('#modalSetting').modal({
       keyboard: false,
       backdrop: 'static'

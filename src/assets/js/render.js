@@ -277,10 +277,7 @@ $(document).ready(async function () {
     });
 
     CLIENT.on('message', (_topic, payload) => {
-      if (_topic === TOPIC) {
-        console.log('Message receive: ' + payload.toString())
-        getQueue();
-      }
+      getQueue();
     });
 
     CLIENT.on('error', (error) => {
