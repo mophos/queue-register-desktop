@@ -20,28 +20,37 @@
     </button>
   </nav>
 
-  <div class="row">
-    <div class="col-sm-12">
-      <select class="form-control form-control-lg" id="slServicePoints">
-        <option value="">-- เลือกจุดบริการ --</option>
-      </select>
-    </div>
-    <div class="col-sm-12">
-      <select class="form-control form-control-lg" id="slPriorities">
-        <option value="">-- ประเภทผู้ป่วย --</option>
-      </select>
-    </div>
-  </div>
+  <div style="padding:10px;">
+    <div class="row">
+      <div class="col-md-6">
+        <select class="form-control form-control-lg" id="slServicePoints">
+          <option value="">-- เลือกจุดบริการ --</option>
+        </select>
+      </div>
 
-  <div class="row">
-    <div class="input-group mb-2 input-group-lg">
-      <input type="text" id="txtHN" class="form-control" placeholder="ระบุ HN แล้วกด ENTER"
-        aria-label="ระบุ HN แล้วกด ENTER" aria-describedby="button-addon2">
-      <div class="input-group-append">
-        <button class="btn btn-success" type="button" id="btnRegister">+ สร้างคิว</button>
+      <div class="col-md-6" >
+        <select class="form-control form-control-lg" id="slPriorities">
+          <option value="">-- ประเภทผู้ป่วย --</option>
+        </select>
       </div>
     </div>
-  </div>
+
+    <div class="row" style="margin-top:10px;">
+      <div class="col-md-12">
+          <div class="input-group input-group-lg">
+              <input type="text" id="txtHN" class="form-control" placeholder="ระบุ HN แล้วกด ENTER"
+                aria-label="ระบุ HN แล้วกด ENTER" aria-describedby="button-addon2">
+              <div class="input-group-append">
+                <button class="btn btn-success" type="button" id="btnRegister">+ สร้างคิว</button>
+              </div>
+            </div>
+      </div>
+    </div>
+
+        
+</div>
+
+  
 
 
   <ul class="list-group" id="listQueue"></ul>
